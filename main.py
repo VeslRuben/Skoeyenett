@@ -23,7 +23,7 @@ net = models.Sequential()
 net.add(layers.Dense(512, activation="relu", input_shape=(28*28,)))
 net.add(layers.Dense(10, activation="softmax"))
 net.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
-net.fit(train_images, train_target, epochs=5, batch_size=128)
+net.fit(train_images, train_target, epochs=10, batch_size=128)
 
 # check model performance over testset
 test_loss, test_acc = net.evaluate(test_images, test_target)
@@ -37,7 +37,7 @@ labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 print('cm: ', cm)
 
 ax = plt.subplot()
-sns.heatmap(cm, annot=True, ax=ax, square=True)
+sns.heatmap(cm, annot=True, ax=ax, square=True, fmt='g')
 
 ax.set_xlabel('Predicted')
 ax.set_ylabel('True')
