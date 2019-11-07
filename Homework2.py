@@ -1,5 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
+
+
 
 
 class fuzzy:
@@ -179,6 +183,16 @@ class fuzzy:
         if location[2] > 0 and marketValue[3] > 0:
             self.houseEvaluation[4] = max(self.houseEvaluation[4], min(location[2], marketValue[3]))
 
+
+        crisp = self.findCentreOfGravity(self.house, self.houseEvaluation)
+
+        temp = []
+        for sets in self.house:
+            temp.append(self.membershipFunction(crisp, sets))
+
+        self.houseEvaluation = temp
+
+        return crisp
         # Output
         # [VLow, Low, Med, High, VHigh]
 
@@ -213,6 +227,15 @@ class fuzzy:
         if asset[2] > 0 and income[3] > 0:
             self.applicantEvaluation[2] = self.minMax(self.applicantEvaluation[2], asset[2], income[3])
 
+        crisp = self.findCentreOfGravity(self.applicant, self.applicantEvaluation)
+
+        temp = []
+        for sets in self.applicant:
+            temp.append(self.membershipFunction(crisp, sets))
+
+        self.applicantEvaluation = temp
+
+        return crisp
         # Output
         # [Low, Medium, High]
 
@@ -256,20 +279,114 @@ class fuzzy:
         if applicant[2] > 0 and house[4] > 0:
             self.creditEvaluation[4] = self.minMax(self.creditEvaluation[4], applicant[2], house[4])
 
+        crisp = self.findCentreOfGravity(self.credit, self.creditEvaluation)
+
+        return crisp
         # Output
         # [VLow, Low, Med, High, VHigh]
 
     def minMax(self, assign, input1, input2):
         return max(assign, min(input1, input2))
 
-    def findCentreOfGravity(self):
-        pass
+    def findCentreOfGravity(self, fuzzySetList:list, vektor:list):
+        sumListOver = []
+        sumListUnder = []
+
+        indexList = []
+        limitList = []
+        setList = []
+
+        for x in vektor:
+            if x == 0:
+                continue
+            else:
+                limitList.append(x)
+                indexList.append(vektor.index(x))
+                setList.append(fuzzySetList[vektor.index(x)])
+
+        lowRange = fuzzySetList[indexList[0]][0]
+        maxRange = fuzzySetList[indexList[len(indexList) - 1]][len(fuzzySetList[indexList[len(indexList) - 1]]) - 1]
+
+        j = 0
+
+        for set in setList:
+            tempOver = []
+            tempUnder = []
+            for i in np.arange(lowRange, maxRange, (maxRange-lowRange)/100):
+                mfValue = self.membershipFunction(i, set)
+                if mfValue > limitList[j]:
+                    mfValue = limitList[j]
+                xValue = i
+                result = mfValue * xValue
+                tempOver.append(result)
+                tempUnder.append(mfValue)
+            sumListOver.append(tempOver)
+            sumListUnder.append(tempUnder)
+            j += 1
+
+        finalListOver = []
+        finalListUnder = []
+        for i in range(len(sumListUnder[0])):
+            highestUnder = 0
+            highestOver = 0
+            for l in sumListUnder:
+                if l[i] > highestUnder:
+                    highestUnder = l[i]
+            for l in sumListOver:
+                if l[i] > highestOver:
+                    highestOver = l[i]
+
+
+            finalListUnder.append(highestUnder)
+            finalListOver.append(highestOver)
+
+        cog = (sum(finalListOver) / sum(finalListUnder))
+
+        return cog
+
+    def plot3d(self):
+        # Market value
+        market = np.arange(0, 1000000, 5000)
+
+        # Location
+        loc = np.arange(0, 10, 0.05)
+
+        z = []
+        #Home evaluation
+
+        for x in market:
+            temp = []
+            for y in loc:
+                self.input[0] = x
+                self.input[1] = y
+                temp.append(self.homeEvaluation())
+            z.append(temp)
+
+        print()
+        z = np.array(z)
+        x = np.array(market)
+        y = np.array(loc)
+
+        X,Y = np.meshgrid(x,y)
+
+        Z = np.sqrt(X ** 2 + Y ** 2)
+
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        surf = ax.plot_surface(x, y, z)
+
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+
+        plt.show()
 
 if __name__ == "__main__":
     # [MarketValue, Location, Asset, Income, Interest]
-    innputt = [700000, 5, 870000, 7500, 8]
+    innputt = [560000, 5, 473250, 30000, 6.5]
     f = fuzzy(innputt)
     f.fuzzify()
-    f.homeEvaluation()
-    f.applicEvaluation()
-    f.creditEval()
+    z1 = f.homeEvaluation()
+    z2 = f.applicEvaluation()
+    z3 = f.creditEval()
+    f.plot3d()
+
