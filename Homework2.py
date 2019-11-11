@@ -155,6 +155,8 @@ class fuzzy:
         # [MarketValue, Location, Asset, Income, Interest]
         # [[Low, Med, High, VHigh], [Bad, Fair, Excellent], [Low, Med, High], [Low, Med, High, VHigh], [Low, Med, High]]
 
+        self.houseEvaluation = [0, 0, 0, 0, 0]
+
         marketValue = self.fuzzifiedInput[0]
         location = self.fuzzifiedInput[1]
 
@@ -203,6 +205,8 @@ class fuzzy:
     def applicEvaluation(self):
         # [MarketValue, Location, Asset, Income, Interest]
         # [[Low, Med, High, VHigh], [Bad, Fair, Excellent], [Low, Med, High], [Low, Med, High, VHigh], [Low, Med, High]]
+        self.applicantEvaluation = [0, 0, 0]
+
         asset = self.fuzzifiedInput[2]
         income = self.fuzzifiedInput[3]
 
@@ -246,6 +250,8 @@ class fuzzy:
     def creditEval(self):
         # [MarketValue, Location, Asset, Income, Interest]
         # [[Low, Med, High, VHigh], [Bad, Fair, Excellent], [Low, Med, High], [Low, Med, High, VHigh], [Low, Med, High]]
+
+        self.creditEvaluation = [0, 0, 0, 0, 0]
 
         income = self.fuzzifiedInput[3]
         interest = self.fuzzifiedInput[4]
@@ -358,12 +364,6 @@ class fuzzy:
         z = np.empty((40,40))
         #Home evaluation
 
-        #for (x,y) in zip(market, loc):
-        #    self.input[0] = x
-        #    self.input[1] = y
-        #    self.fuzzify()
-        #    z.append(self.homeEvaluation())
-
         j = 0
         for x in market:
             i = 0
@@ -376,30 +376,64 @@ class fuzzy:
             j += 1
 
         print()
-        z = np.array(z)
         x = np.array(market)
         y = np.array(loc)
 
         X,Y = np.meshgrid(x,y)
 
-        Z = np.sqrt(X ** 2 + Y ** 2)
-
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-
         surf = ax.plot_surface(Y, X, z)
-
         fig.colorbar(surf, shrink=0.5, aspect=5)
+        fig.show()
 
-        plt.show()
+        income = np.arange(0, 100000, 2500)
+        asset = np.arange(0, 1000000, 25000)
+
+        z2 = np.empty((40,40))
+
+        j = 0
+        for x in income:
+            i = 0
+            for y in asset:
+                self.input[2] = y
+                self.input[3] = x
+                self.fuzzify()
+                z2[j][i] = self.applicEvaluation()
+                i += 1
+            j += 1
+
+        x = np.array(income)
+        y = np.array(asset)
+
+        X, Y = np.meshgrid(x, y)
+
+        fig2 = plt.figure()
+        ax = fig2.gca(projection='3d')
+        surf = ax.plot_surface(X, Y, z2)
+        fig2.colorbar(surf, shrink=0.5, aspect=5)
+        fig2.show()
+
+        z3 = np.empty((40,40))
+
+        z = z.reshape(-1, 1)
+        z2 = z2.reshape(-1, 1)
+
+        j = 0
+        for x in z:
+            i = 0
+            for y in z2:
+                self.applicantEvaluation = self.membershipFunction(y, )
+                self.houseEvaluation = x
+
 
 if __name__ == "__main__":
     # [MarketValue, Location, Asset, Income, Interest]
     innputt = [560000, 5, 473250, 30000, 6.5]
     f = fuzzy(innputt)
     f.fuzzify()
-    z1 = f.homeEvaluation()
-    z2 = f.applicEvaluation()
-    z3 = f.creditEval()
-    f.plot3d()
+    print(f.homeEvaluation())
+    print(f.applicEvaluation())
+    print(f.creditEval())
+    #f.plot3d()
 
