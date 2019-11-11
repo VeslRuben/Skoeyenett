@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -86,7 +87,7 @@ class fuzzy:
 
     def fuzzify(self):
         fuzzyList = [self.marketValue, self.location, self.asset, self.income, self.interest]
-
+        self.fuzzifiedInput = []
         i = 0
         for bigSets in fuzzyList:
             temp = []
@@ -103,10 +104,11 @@ class fuzzy:
             d = limits[3]
             if (a <= x <= d):
                 if (a <= x <= b):
-                    try:
-                        return (x - a) / (b - a)
-                    except ZeroDivisionError:
+                    temp = (x - a) / (b - a)
+                    if math.isnan(temp):
                         return 1
+                    else:
+                        return temp
                 elif (c <= x <= d):
                     return (d - x) / (d - c)
                 else:
@@ -118,15 +120,17 @@ class fuzzy:
             b = limits[1]
             c = limits[2]
             if (a <= x <= b):
-                try:
-                    return (x - a) / (b - a)
-                except ZeroDivisionError:
+                temp = (x - a) / (b - a)
+                if math.isnan(temp):
                     return 1
+                else:
+                    return temp
             elif (b <= x <= c):
-                try:
-                    return (c - x) / (c - b)
-                except ZeroDivisionError:
+                temp = (c - x) / (c - b)
+                if math.isnan(temp):
                     return 1
+                else:
+                    return temp
             else:
                 return 0
 
@@ -346,21 +350,30 @@ class fuzzy:
 
     def plot3d(self):
         # Market value
-        market = np.arange(0, 1000000, 5000)
+        market = np.arange(0, 1000000, 25000)
 
         # Location
-        loc = np.arange(0, 10, 0.05)
+        loc = np.arange(0, 10, 0.25)
 
-        z = []
+        z = np.empty((40,40))
         #Home evaluation
 
+        #for (x,y) in zip(market, loc):
+        #    self.input[0] = x
+        #    self.input[1] = y
+        #    self.fuzzify()
+        #    z.append(self.homeEvaluation())
+
+        j = 0
         for x in market:
-            temp = []
+            i = 0
             for y in loc:
                 self.input[0] = x
                 self.input[1] = y
-                temp.append(self.homeEvaluation())
-            z.append(temp)
+                self.fuzzify()
+                z[j][i] = self.homeEvaluation()
+                i += 1
+            j += 1
 
         print()
         z = np.array(z)
@@ -374,7 +387,7 @@ class fuzzy:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
 
-        surf = ax.plot_surface(x, y, z)
+        surf = ax.plot_surface(Y, X, z)
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
 
