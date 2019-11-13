@@ -4,10 +4,11 @@ from keras.datasets import mnist
 from keras.utils import to_categorical
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
-from keras.layers import Dropout
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 
 def vanligNeural():
@@ -111,7 +112,7 @@ def kfoldNeural():
 
     plt.show()
 
-def dropoutNeural():
+def pcaNeural():
     (train_images, train_target), (test_images, test_target) = mnist.load_data()
 
     train_images = train_images.reshape(60000, 28 * 28)
@@ -120,18 +121,32 @@ def dropoutNeural():
     train_target = to_categorical(train_target)
     test_target = to_categorical(test_target)
 
-    train_images = train_images / 255
-    test_images = test_images / 255
+    #train_images = train_images / 255
+    #test_images = test_images / 255
 
-    net = createDropOutModel()
+    scaler = StandardScaler()
+    scaler.fit(train_images)
+    X_sc_train = scaler.transform(train_images)
+    X_sc_test = scaler.transform(test_images)
 
-    net.fit(train_images, train_target, epochs=3, batch_size=128)
+    size = 500
+
+    pca = PCA(n_components=size)
+    train_images_pca = pca.fit_transform(X_sc_train)
+    test_images_pca = pca.fit_transform(X_sc_test)
+    pca_std = np.std(train_images_pca)
+
+    model = models.Sequential()
+    model.add(layers.Dense(128, activation="relu", input_shape=(size,)))
+    model.add(layers.Dense(10, activation="softmax"))
+    model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
+    model.fit(train_images_pca, train_target, epochs=10, batch_size=128, validation_split=0.15)
 
     # check model performance over testset
-    test_loss, test_acc = net.evaluate(test_images, test_target)
+    test_loss, test_acc = model.evaluate(test_images_pca, test_target)
     print('test_accuracy: ', test_acc)
 
-    y_pred = net.predict_classes(test_images)
+    y_pred = model.predict_classes(test_images_pca)
 
     y_true = np.argmax(test_target, axis=1)
     cm = confusion_matrix(y_true, y_pred)
@@ -149,7 +164,6 @@ def dropoutNeural():
 
     plt.show()
 
-
 def createModel():
     model = models.Sequential()
     model.add(layers.Dense(512, activation="relu", input_shape=(28 * 28,)))
@@ -157,14 +171,6 @@ def createModel():
     model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
     return model
 
-def createDropOutModel():
-    model = models.Sequential()
-    model.add(Dropout(0.2, input_shape=(28 * 28,)))
-    model.add(layers.Dense(512, activation="relu", input_shape=(28 * 28,)))
-    model.add(layers.Dense(10, activation="softmax"))
-    model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
-    return model
-
 
 if __name__ == "__main__":
-    dropoutNeural()
+    pcaNeural()

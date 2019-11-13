@@ -367,10 +367,10 @@ class fuzzyv2:
             fx = args[2]
             fuzzyZ = args[3]
 
-            xvektor = np.arange(0, max(input1[len(input1) - 1]), max(input1[len(input1) - 1]) / 40)
-            yvektor = np.arange(0, max(input2[len(input2) - 1]), max(input2[len(input2) - 1]) / 40)
+            xvektor = np.arange(0, max(input1[len(input1) - 1]), max(input1[len(input1) - 1]) / 20)
+            yvektor = np.arange(0, max(input2[len(input2) - 1]), max(input2[len(input2) - 1]) / 20)
 
-            zvektor = np.empty((40, 40))
+            zvektor = np.empty((20, 20))
 
             j = 0
             for x in xvektor:
@@ -399,10 +399,10 @@ class fuzzyv2:
             fx = args[4]
             fuzzyZ = args[5]
 
-            xvektor = np.arange(0, max(input1[len(input1) - 1]), max(input1[len(input1) - 1]) / 40)
-            yvektor = np.arange(0, max(input2[len(input2) - 1]), max(input2[len(input2) - 1]) / 40)
+            xvektor = np.arange(0, max(input1[len(input1) - 1]), max(input1[len(input1) - 1]) / 20)
+            yvektor = np.arange(0, max(input2[len(input2) - 1]), max(input2[len(input2) - 1]) / 20)
 
-            zvektor = np.empty((40, 40))
+            zvektor = np.empty((20, 20))
 
             j = 0
             for x in xvektor:
@@ -477,6 +477,7 @@ class fuzzyv2:
 
 
 if __name__ == "__main__":
+    # input = [MarketValue, Location, Assets, Income, Interest]
     innputt = [700000, 6.5, 70200, 33000, 7]
     print(innputt)
     f = fuzzyv2()
