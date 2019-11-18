@@ -1,6 +1,7 @@
 from keras import models
 from keras import layers
 from keras.datasets import mnist
+from keras.utils import np_utils
 from keras.utils import to_categorical
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
@@ -17,8 +18,8 @@ def vanligNeural():
     train_images = train_images.reshape(60000, 28*28)
     test_images = test_images.reshape(10000, 28*28)
 
-    train_target = to_categorical(train_target)
-    test_target = to_categorical(test_target)
+    train_target = np_utils.to_categorical(train_target)
+    test_target = np_utils.to_categorical(test_target)
 
     train_images = train_images / 255
     test_images = test_images / 255
@@ -115,44 +116,72 @@ def kfoldNeural():
 def pcaNeural():
     (train_images, train_target), (test_images, test_target) = mnist.load_data()
 
-    train_images = train_images.reshape(60000, 28 * 28)
-    test_images = test_images.reshape(10000, 28 * 28)
-
-    train_target = to_categorical(train_target)
+    Y_train = to_categorical(train_target)
     test_target = to_categorical(test_target)
 
-    train_images = train_images / 255
-    test_images = test_images / 255
+    X_train = (train_images).astype('float32')
+    X_test = (test_images).astype('float32')
+
+    plt.imshow(X_train[1].reshape(28, 28))
+    plt.show()
+    X_train = X_train.reshape(60000, 28 * 28)
+    X_test = X_test.reshape(10000, 28 * 28)
 
     scaler = StandardScaler()
-    scaler.fit(train_images)
-    X_sc_train = scaler.transform(train_images)
-    X_sc_test = scaler.transform(test_images)
+    scaler.fit(X_train)
+    X_sc_train = scaler.transform(X_train)
+    X_sc_test = scaler.transform(X_test)
 
-    size = 150
+    pca = PCA(n_components=500)
+    pca.fit(X_train)
 
-    pca = PCA(n_components=size)
-    pca.fit(train_images)
+    plt.plot(np.cumsum(pca.explained_variance_ratio_))
+    plt.xlabel('Number of components')
+    plt.ylabel('Cumulative explained variance')
 
-    train_images_pca = pca.fit_transform(X_sc_train)
-    test_images_pca = pca.fit_transform(X_sc_test)
-    pca_std = np.std(train_images_pca)
+    NCOMPONENTS = 100
 
-    model = models.Sequential()
-    model.add(layers.Dense(128, activation="relu", input_shape=(size,)))
+    pca = PCA(n_components=NCOMPONENTS)
+    X_pca_train = pca.fit_transform(X_sc_train)
+    X_pca_test = pca.fit_transform(X_sc_test)
+    pca_std = np.std(X_pca_train)
+
+    print(X_sc_train.shape)
+    print(X_pca_train.shape)
+
+    inv_pca = pca.inverse_transform(X_pca_train)
+    inv_sc = scaler.inverse_transform(inv_pca)
+
+    def side_by_side(indexes):
+        org = X_train[indexes].reshape(28, 28)
+        rec = inv_sc[indexes].reshape(28, 28)
+        pair = np.concatenate((org, rec), axis=1)
+        plt.figure(figsize=(4, 2))
+        plt.imshow(pair)
+        plt.show()
+
+    for index in range(0, 10):
+        side_by_side(index)
+
+    units = 128
+    model = layers.Sequential()
+    model.add(layers.Dense(units, input_dim=NCOMPONENTS, activation='relu'))
+    model.add(layers.GaussianNoise(pca_std))
+
+    model.add(layers.Dense(units, activation='relu'))
+    model.add(layers.GaussianNoise(pca_std))
     model.add(layers.Dropout(0.1))
-    model.add(layers.Dense(10, activation="softmax"))
-    model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
-    model.fit(train_images_pca, train_target, epochs=3, batch_size=64, validation_split=0.15)
 
-    # check model performance over testset
-    test_loss, test_acc = model.evaluate(test_images_pca, test_target)
-    print('test_accuracy: ', test_acc)
+    model.add(layers.Dense(10, activation='softmax'))
 
-    y_pred = model.predict_classes(test_images_pca)
+    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['categorical_accuracy'])
+
+    model.fit(X_pca_train, Y_train, epochs=100, batch_size=256, validation_split=0.15, verbose=2)
+
+    predictions = model.predict_classes(X_pca_test, verbose=0)
 
     y_true = np.argmax(test_target, axis=1)
-    cm = confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, predictions)
     labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     print('cm: ', cm)
 
@@ -167,6 +196,73 @@ def pcaNeural():
 
     plt.show()
 
+
+class pcav2yolo:
+    def __init__(self):
+        pass
+
+    def run(self):
+        (train_images, train_target), (test_images, test_target) = mnist.load_data()
+
+        train_target = np_utils.to_categorical(train_target)
+        test_target = np_utils.to_categorical(test_target)
+
+        train_images = (train_images).astype('float32')
+        test_images = (test_images).astype('float32')
+
+        train_images = train_images.reshape(60000, 28 * 28)
+        test_images = test_images.reshape(10000, 28 * 28)
+
+        scaler = StandardScaler()
+        scaler.fit(train_images)
+        train_images_sc = scaler.transform(train_images)
+        test_images_sc = scaler.transform(test_images)
+
+        pca = PCA(n_components=500)
+        pca.fit(train_images)
+
+        NCOMPONENTS = 100
+
+        pca = PCA(n_components=NCOMPONENTS)
+        train_images_pca = pca.fit_transform(train_images_sc)
+        test_images_pca = pca.transform(test_images_sc)
+        pca_std = np.std(train_images_pca)
+
+        model = models.Sequential()
+        layer = 1
+        units = 128
+
+        model.add(layers.Dense(units, input_dim=NCOMPONENTS, activation='relu'))
+        model.add(layers.GaussianNoise(pca_std))
+        for i in range(layer):
+            model.add(layers.Dense(units, activation='relu'))
+            model.add(layers.GaussianNoise(pca_std))
+            model.add(layers.Dropout(0.1))
+        model.add(layers.Dense(10, activation='softmax'))
+
+        model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['categorical_accuracy'])
+
+        model.fit(train_images_pca, train_target, epochs=100, batch_size=256, validation_split=0.15, verbose=2)
+
+        predictions = model.predict_classes(test_images_pca, verbose=0)
+
+        y_true = np.argmax(test_target, axis=1)
+        cm = confusion_matrix(y_true, predictions)
+
+        print('cm: ', cm)
+
+        ax = plt.subplot()
+        sns.heatmap(cm, annot=True, ax=ax, square=True, fmt='g')
+
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('True')
+        ax.set_title('Confusion Matrix')
+        ax.xaxis.set_ticklabels(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+        ax.yaxis.set_ticklabels(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+
+        plt.show()
+
+
 def createModel():
     model = models.Sequential()
     model.add(layers.Dense(512, activation="relu", input_shape=(28 * 28,)))
@@ -176,5 +272,6 @@ def createModel():
 
 
 if __name__ == "__main__":
-    pcaNeural()
+    p = pcav2yolo()
+    p.run()
     #swag
