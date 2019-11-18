@@ -1,25 +1,24 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import math
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
-from mpl_toolkits.mplot3d import axes3d, Axes3D
 
-
-class fuzzyv2:
+class fuzzy:
 
     def __init__(self):
         # Market value fuzzy sets
-        self.mvLow = [0, 0, 75000, 100000]
-        self.mvMedium = [50000, 100000, 200000, 250000]
-        self.mvHigh = [200000, 300000, 650000, 850000]
-        self.mvVHigh = [650000, 850000, 1000000, 1000000]
-        self.marketValue = [self.mvLow, self.mvMedium, self.mvHigh, self.mvVHigh]
+        self.marketLow = [0, 0, 75000, 100000]
+        self.marketMedium = [50000, 100000, 200000, 250000]
+        self.marketHigh = [200000, 300000, 650000, 850000]
+        self.marketVHigh = [650000, 850000, 1000000, 1000000]
+        self.marketValueSet = [self.marketLow, self.marketMedium, self.marketHigh, self.marketVHigh]
 
         # Location fuzzy sets
-        self.locBad = [0, 0, 1.5, 4]
-        self.locFair = [2.5, 5, 6, 8.5]
-        self.locExc = [6, 8.5, 10, 10]
-        self.location = [self.locBad, self.locFair, self.locExc]
+        self.locationBad = [0, 0, 1.5, 4]
+        self.locationFair = [2.5, 5, 6, 8.5]
+        self.locationExc = [6, 8.5, 10, 10]
+        self.location = [self.locationBad, self.locationFair, self.locationExc]
 
         # House fuzzy sets
         self.houseVLow = [0, 0, 3]
@@ -43,10 +42,10 @@ class fuzzyv2:
         self.income = [self.incomeLow, self.incomeMed, self.incomeHigh, self.incomeVHigh]
 
         # Applicant fuzzy sets
-        self.applLow = [0, 0, 2, 4]
-        self.applMed = [2, 5, 8]
-        self.applHigh = [6, 8, 10, 10]
-        self.applicant = [self.applLow, self.applMed, self.applHigh]
+        self.applicantLow = [0, 0, 2, 4]
+        self.applicantMed = [2, 5, 8]
+        self.applicantHigh = [6, 8, 10, 10]
+        self.applicant = [self.applicantLow, self.applicantMed, self.applicantHigh]
 
         # Interest fuzzy sets
         self.interestLow = [0, 0, 2, 5]
@@ -62,33 +61,13 @@ class fuzzyv2:
         self.creditVHigh = [375000, 500000, 500000]
         self.credit = [self.creditVLow, self.creditLow, self.creditMed, self.creditHigh, self.creditVHigh]
 
-        self.fuzzySets = [self.marketValue, self.location, self.house, self.asset, self.income, self.applicant,
+        self.fuzzySets = [self.marketValueSet, self.location, self.house, self.asset, self.income, self.applicant,
                           self.interest, self.credit]
 
         # Outputs
         self.houseEvaluation = [0, 0, 0, 0, 0]
         self.applicantEvaluation = [0, 0, 0]
         self.creditEvaluation = [0, 0, 0, 0, 0]
-
-    def fuzzify(self, input, keyword):
-        if keyword == 'mv':
-            return self.membershipFunction(input, self.marketValue)
-        elif keyword == 'loc':
-            return self.membershipFunction(input, self.location)
-        elif keyword == 'hv':
-            return self.membershipFunction(input, self.house)
-        elif keyword == 'ass':
-            return self.membershipFunction(input, self.asset)
-        elif keyword == 'inc':
-            return self.membershipFunction(input, self.income)
-        elif keyword == 'ae':
-            return self.membershipFunction(input, self.applicant)
-        elif keyword == 'intr':
-            return self.membershipFunction(input, self.interest)
-        elif keyword == 'cred':
-            return self.membershipFunction(input, self.credit)
-        else:
-            raise Exception('Keyword not recognized')
 
     def membershipFunction(self, x, limitsList):
         out = []
@@ -131,6 +110,26 @@ class fuzzyv2:
                     out.append(0)
         return out
 
+    def fuzzify(self, input, keyword):
+        if keyword == 'mv':
+            return self.membershipFunction(input, self.marketValueSet)
+        elif keyword == 'loc':
+            return self.membershipFunction(input, self.location)
+        elif keyword == 'hv':
+            return self.membershipFunction(input, self.house)
+        elif keyword == 'ass':
+            return self.membershipFunction(input, self.asset)
+        elif keyword == 'inc':
+            return self.membershipFunction(input, self.income)
+        elif keyword == 'ae':
+            return self.membershipFunction(input, self.applicant)
+        elif keyword == 'intr':
+            return self.membershipFunction(input, self.interest)
+        elif keyword == 'cred':
+            return self.membershipFunction(input, self.credit)
+        else:
+            raise Exception('Keyword not recognized')
+
     def plotLimit(self, fuzzySet, title):
         minimum = fuzzySet[0][0]
         maximum = fuzzySet[len(fuzzySet) - 1][len(fuzzySet[len(fuzzySet) - 1]) - 1]
@@ -164,166 +163,125 @@ class fuzzyv2:
         for sets, title in zip(self.fuzzySets, titles):
             self.plotLimit(sets, title)
 
-    def homeEvaluation(self, marketValue, location):
-        houseEvaluation = {'VLow': 0, 'Low': 0, 'Med': 0, 'High': 0, 'VHigh': 0}
-        mValue = {'Low': marketValue[0], 'Med': marketValue[1], 'High': marketValue[2], 'VHigh': marketValue[3]}
-        loc = {'Bad': location[0], 'Fair': location[1], 'Exc': location[2]}
-
-        # Rule 1:
-        houseEvaluation['Low'] = max(houseEvaluation['Low'], mValue['Low'])
-
-        # Rule 2:
-        houseEvaluation['Low'] = max(houseEvaluation['Low'], loc['Bad'])
-
-        # Rule 3:
-        houseEvaluation['VLow'] = self.minMax(houseEvaluation['VLow'], mValue['Low'], loc['Bad'])
-
-        # Rule 4:
-        houseEvaluation['Low'] = self.minMax(houseEvaluation['Low'], mValue['Med'], loc['Bad'])
-
-        # Rule 5:
-        houseEvaluation['Med'] = self.minMax(houseEvaluation['Med'], mValue['High'], loc['Bad'])
-
-        # Rule 6:
-        houseEvaluation['High'] = self.minMax(houseEvaluation['High'], mValue['VHigh'], loc['Bad'])
-
-        # Rule 7:
-        houseEvaluation['Low'] = self.minMax(houseEvaluation['Low'], mValue['Low'], loc['Fair'])
-
-        # Rule 8:
-        houseEvaluation['Med'] = self.minMax(houseEvaluation['Med'], mValue['Med'], loc['Fair'])
-
-        # Rule 9:
-        houseEvaluation['High'] = self.minMax(houseEvaluation['High'], mValue['High'], loc['Fair'])
-
-        # Rule 10:
-        houseEvaluation['VHigh'] = self.minMax(houseEvaluation['VHigh'], mValue['VHigh'], loc['Fair'])
-
-        # Rule 11:
-        houseEvaluation['Med'] = self.minMax(houseEvaluation['Med'], mValue['Low'], loc['Exc'])
-
-        # Rule 12:
-        houseEvaluation['High'] = self.minMax(houseEvaluation['High'], mValue['Med'], loc['Exc'])
-
-        # Rule 13:
-        houseEvaluation['VHigh'] = self.minMax(houseEvaluation['VHigh'], mValue['High'], loc['Exc'])
-
-        # Rule 14:
-        houseEvaluation['VHigh'] = self.minMax(houseEvaluation['VHigh'], mValue['VHigh'], loc['Exc'])
-
-        returnList = [houseEvaluation['VLow'], houseEvaluation['Low'], houseEvaluation['Med'], houseEvaluation['High'],
-                      houseEvaluation['VHigh']]
-
-        return returnList
-
-    def applicEvaluation(self, asset, income):
-        applicantEvaluation = {'Low': 0, 'Med': 0, 'High': 0}
-
-        ass = {'Low': asset[0], 'Med': asset[1], 'High': asset[2]}
-        inc = {'Low': income[0], 'Med': income[1], 'High': income[2], 'VHigh': income[3]}
-
-        # Rule 1:
-        applicantEvaluation['Low'] = self.minMax(applicantEvaluation['Low'], ass['Low'], inc['Low'])
-
-        # Rule 2:
-        applicantEvaluation['Low'] = self.minMax(applicantEvaluation['Low'], ass['Low'], inc['Med'])
-
-        # Rule 3:
-        applicantEvaluation['Med'] = self.minMax(applicantEvaluation['Med'], ass['Low'], inc['High'])
-
-        # Rule 4:
-        applicantEvaluation['High'] = self.minMax(applicantEvaluation['High'], ass['Low'], inc['VHigh'])
-
-        # Rule 5:
-        applicantEvaluation['Low'] = self.minMax(applicantEvaluation['Low'], ass['Med'], inc['Low'])
-
-        # Rule 6:
-        applicantEvaluation['Med'] = self.minMax(applicantEvaluation['Med'], ass['Med'], inc['Med'])
-
-        # Rule 7:
-        applicantEvaluation['High'] = self.minMax(applicantEvaluation['High'], ass['Med'], inc['High'])
-
-        # Rule 8:
-        applicantEvaluation['High'] = self.minMax(applicantEvaluation['High'], ass['Med'], inc['VHigh'])
-
-        # Rule 9:
-        applicantEvaluation['Med'] = self.minMax(applicantEvaluation['Med'], ass['High'], inc['Low'])
-
-        # Rule 10:
-        applicantEvaluation['Med'] = self.minMax(applicantEvaluation['Med'], ass['High'], inc['Med'])
-
-        # Rule 11:
-        applicantEvaluation['High'] = self.minMax(applicantEvaluation['High'], ass['High'], inc['High'])
-
-        # Rule 12:
-        applicantEvaluation['High'] = self.minMax(applicantEvaluation['High'], ass['High'], inc['VHigh'])
-
-        returnList = [applicantEvaluation['Low'], applicantEvaluation['Med'], applicantEvaluation['High']]
-
-        return returnList
+    def minOfMax(self, assign, input1, input2):
+        return max(assign, min(input1, input2))
 
     def creditEval(self, income, interest, applicant, house):
         creditEvaluation = {'VLow': 0, 'Low': 0, 'Med': 0, 'High': 0, 'VHigh': 0}
 
-        inc = {'Low': income[0], 'Med': income[1], 'High': income[2], 'VHigh': income[3]}
-        intr = {'Low': interest[0], 'Med': interest[1], 'High': interest[2]}
-        appl = {'Low': applicant[0], 'Med': applicant[1], 'High': applicant[2]}
-        hv = {'VLow': house[0], 'Low': house[1], 'Med': house[2], 'High': house[3], 'VHigh': house[4]}
+        incom = {'Low': income[0], 'Med': income[1], 'High': income[2], 'VHigh': income[3]}
+        intrest = {'Low': interest[0], 'Med': interest[1], 'High': interest[2]}
+        applicant = {'Low': applicant[0], 'Med': applicant[1], 'High': applicant[2]}
+        houseValue = {'VLow': house[0], 'Low': house[1], 'Med': house[2], 'High': house[3], 'VHigh': house[4]}
 
-        # Rule 1:
-        creditEvaluation['VLow'] = self.minMax(creditEvaluation['VLow'], inc['Low'], intr['Med'])
+        creditEvaluation['VLow'] = self.minOfMax(creditEvaluation['VLow'], incom['Low'], intrest['Med'])
 
-        # Rule 2:
-        creditEvaluation['VLow'] = self.minMax(creditEvaluation['VLow'], inc['Low'], intr['High'])
+        creditEvaluation['VLow'] = self.minOfMax(creditEvaluation['VLow'], incom['Low'], intrest['High'])
 
-        # Rule 3:
-        creditEvaluation['Low'] = self.minMax(creditEvaluation['Low'], inc['Med'], intr['High'])
+        creditEvaluation['Low'] = self.minOfMax(creditEvaluation['Low'], incom['Med'], intrest['High'])
 
-        # Rule 4:
-        creditEvaluation['VLow'] = max(creditEvaluation['VLow'], appl['Low'])
+        creditEvaluation['VLow'] = max(creditEvaluation['VLow'], applicant['Low'])
 
-        # Rule 5:
-        creditEvaluation['VLow'] = max(creditEvaluation['VLow'], hv['VLow'])
+        creditEvaluation['VLow'] = max(creditEvaluation['VLow'], houseValue['VLow'])
 
-        # Rule 6:
-        creditEvaluation['Low'] = self.minMax(creditEvaluation['Low'], appl['Med'], hv['VLow'])
+        creditEvaluation['Low'] = self.minOfMax(creditEvaluation['Low'], applicant['Med'], houseValue['VLow'])
 
-        # Rule 7:
-        creditEvaluation['Low'] = self.minMax(creditEvaluation['Low'], appl['Med'], hv['Low'])
+        creditEvaluation['Low'] = self.minOfMax(creditEvaluation['Low'], applicant['Med'], houseValue['Low'])
 
-        # Rule 8:
-        creditEvaluation['Med'] = self.minMax(creditEvaluation['Med'], appl['Med'], hv['Med'])
+        creditEvaluation['Med'] = self.minOfMax(creditEvaluation['Med'], applicant['Med'], houseValue['Med'])
 
-        # Rule 9:
-        creditEvaluation['High'] = self.minMax(creditEvaluation['High'], appl['Med'], hv['High'])
+        creditEvaluation['High'] = self.minOfMax(creditEvaluation['High'], applicant['Med'], houseValue['High'])
 
-        # Rule 10:
-        creditEvaluation['High'] = self.minMax(creditEvaluation['High'], appl['Med'], hv['VHigh'])
+        creditEvaluation['High'] = self.minOfMax(creditEvaluation['High'], applicant['Med'], houseValue['VHigh'])
 
-        # Rule 11:
-        creditEvaluation['Low'] = self.minMax(creditEvaluation['Low'], appl['High'], hv['VLow'])
+        creditEvaluation['Low'] = self.minOfMax(creditEvaluation['Low'], applicant['High'], houseValue['VLow'])
 
-        # Rule 12:
-        creditEvaluation['Med'] = self.minMax(creditEvaluation['Med'], appl['High'], hv['Low'])
+        creditEvaluation['Med'] = self.minOfMax(creditEvaluation['Med'], applicant['High'], houseValue['Low'])
 
-        # Rule 13:
-        creditEvaluation['High'] = self.minMax(creditEvaluation['High'], appl['High'], hv['Med'])
+        creditEvaluation['High'] = self.minOfMax(creditEvaluation['High'], applicant['High'], houseValue['Med'])
 
-        # Rule 14:
-        creditEvaluation['High'] = self.minMax(creditEvaluation['High'], appl['High'], hv['High'])
+        creditEvaluation['High'] = self.minOfMax(creditEvaluation['High'], applicant['High'], houseValue['High'])
 
-        # Rule 15:
-        creditEvaluation['VHigh'] = self.minMax(creditEvaluation['VHigh'], appl['High'], hv['VHigh'])
+        creditEvaluation['VHigh'] = self.minOfMax(creditEvaluation['VHigh'], applicant['High'], houseValue['VHigh'])
 
-        returnList = [creditEvaluation['VLow'], creditEvaluation['Low'], creditEvaluation['Med'],
+        return_list = [creditEvaluation['VLow'], creditEvaluation['Low'], creditEvaluation['Med'],
                       creditEvaluation['High'], creditEvaluation['VHigh']]
 
-        return returnList
+        return return_list
 
-    def minMax(self, assign, input1, input2):
-        return max(assign, min(input1, input2))
+    def applicEvaluation(self, asset, income):
+        applicantEvaluation = {'Low': 0, 'Med': 0, 'High': 0}
 
-    def findCentreOfGravity(self, fuzzySetList: list, vektor: list):
+        assets = {'Low': asset[0], 'Med': asset[1], 'High': asset[2]}
+        income = {'Low': income[0], 'Med': income[1], 'High': income[2], 'VHigh': income[3]}
+
+        applicantEvaluation['Low'] = self.minOfMax(applicantEvaluation['Low'], assets['Low'], income['Low'])
+
+        applicantEvaluation['Low'] = self.minOfMax(applicantEvaluation['Low'], assets['Low'], income['Med'])
+
+        applicantEvaluation['Med'] = self.minOfMax(applicantEvaluation['Med'], assets['Low'], income['High'])
+
+        applicantEvaluation['High'] = self.minOfMax(applicantEvaluation['High'], assets['Low'], income['VHigh'])
+
+        applicantEvaluation['Low'] = self.minOfMax(applicantEvaluation['Low'], assets['Med'], income['Low'])
+
+        applicantEvaluation['Med'] = self.minOfMax(applicantEvaluation['Med'], assets['Med'], income['Med'])
+
+        applicantEvaluation['High'] = self.minOfMax(applicantEvaluation['High'], assets['Med'], income['High'])
+
+        applicantEvaluation['High'] = self.minOfMax(applicantEvaluation['High'], assets['Med'], income['VHigh'])
+
+        applicantEvaluation['Med'] = self.minOfMax(applicantEvaluation['Med'], assets['High'], income['Low'])
+
+        applicantEvaluation['Med'] = self.minOfMax(applicantEvaluation['Med'], assets['High'], income['Med'])
+
+        applicantEvaluation['High'] = self.minOfMax(applicantEvaluation['High'], assets['High'], income['High'])
+
+        applicantEvaluation['High'] = self.minOfMax(applicantEvaluation['High'], assets['High'], income['VHigh'])
+
+        return_list = [applicantEvaluation['Low'], applicantEvaluation['Med'], applicantEvaluation['High']]
+
+        return return_list
+
+    def homeEvaluation(self, marketValue, location):
+        houseEvaluation = {'VLow': 0, 'Low': 0, 'Med': 0, 'High': 0, 'VHigh': 0}
+        marketValue = {'Low': marketValue[0], 'Med': marketValue[1], 'High': marketValue[2], 'VHigh': marketValue[3]}
+        location = {'Bad': location[0], 'Fair': location[1], 'Exc': location[2]}
+
+        houseEvaluation['Low'] = max(houseEvaluation['Low'], marketValue['Low'])
+
+        houseEvaluation['Low'] = max(houseEvaluation['Low'], location['Bad'])
+
+        houseEvaluation['VLow'] = self.minOfMax(houseEvaluation['VLow'], marketValue['Low'], location['Bad'])
+
+        houseEvaluation['Low'] = self.minOfMax(houseEvaluation['Low'], marketValue['Med'], location['Bad'])
+
+        houseEvaluation['Med'] = self.minOfMax(houseEvaluation['Med'], marketValue['High'], location['Bad'])
+
+        houseEvaluation['High'] = self.minOfMax(houseEvaluation['High'], marketValue['VHigh'], location['Bad'])
+
+        houseEvaluation['Low'] = self.minOfMax(houseEvaluation['Low'], marketValue['Low'], location['Fair'])
+
+        houseEvaluation['Med'] = self.minOfMax(houseEvaluation['Med'], marketValue['Med'], location['Fair'])
+
+        houseEvaluation['High'] = self.minOfMax(houseEvaluation['High'], marketValue['High'], location['Fair'])
+
+        houseEvaluation['VHigh'] = self.minOfMax(houseEvaluation['VHigh'], marketValue['VHigh'], location['Fair'])
+
+        houseEvaluation['Med'] = self.minOfMax(houseEvaluation['Med'], marketValue['Low'], location['Exc'])
+
+        houseEvaluation['High'] = self.minOfMax(houseEvaluation['High'], marketValue['Med'], location['Exc'])
+
+        houseEvaluation['VHigh'] = self.minOfMax(houseEvaluation['VHigh'], marketValue['High'], location['Exc'])
+
+        houseEvaluation['VHigh'] = self.minOfMax(houseEvaluation['VHigh'], marketValue['VHigh'], location['Exc'])
+
+        return_list = [houseEvaluation['VLow'], houseEvaluation['Low'], houseEvaluation['Med'], houseEvaluation['High'],
+                      houseEvaluation['VHigh']]
+
+        return return_list
+
+    def findCOG(self, fuzzySetList: list, vektor: list):
         sumListOver = []
         sumListUnder = []
 
@@ -342,7 +300,7 @@ class fuzzyv2:
 
         return cog
 
-    def findCentreOfGravityScale(self, fuzzySetList: list, vektor: list):
+    def findCOGScale(self, fuzzySetList: list, vektor: list):
         sumListOver = []
         sumListUnder = []
 
@@ -360,7 +318,7 @@ class fuzzyv2:
 
         return cog
 
-    def plot3d(self, *args, flipFlag=False):
+    def plot(self, *args, flipFlag=False):
         if len(args) == 4:
             input1 = args[0]
             input2 = args[1]
@@ -379,7 +337,7 @@ class fuzzyv2:
                     xtemp = self.membershipFunction(x, input1)
                     ytemp = self.membershipFunction(y, input2)
                     zlist = fx(xtemp, ytemp)
-                    zvektor[j][i] = self.findCentreOfGravity(fuzzyZ, zlist)
+                    zvektor[j][i] = self.findCOG(fuzzyZ, zlist)
                     i += 1
                 j += 1
 
@@ -414,7 +372,7 @@ class fuzzyv2:
                         zlist = fx(input3, ytemp, xtemp, input4)
                     else:
                         zlist = fx(input3, input4, xtemp, ytemp)
-                    zvektor[j][i] = self.findCentreOfGravity(fuzzyZ, zlist)
+                    zvektor[j][i] = self.findCOG(fuzzyZ, zlist)
                     i += 1
                 j += 1
 
@@ -429,66 +387,66 @@ class fuzzyv2:
 
             fig.show()
 
-    def getEvaluationClipped(self, inputVar):
+    def getClipped(self, inputVar):
         # Input:
         # [MarketValue, Location, Assets, Income, Interest]
         mvfuzz = self.fuzzify(inputVar[0], 'mv')
         locfuzz = self.fuzzify(inputVar[1], 'loc')
         hvfuzz = self.homeEvaluation(mvfuzz, locfuzz)
-        hvCrisp = self.findCentreOfGravity(f.house, hvfuzz)
+        hvCrisp = self.findCOG(fuzz.house, hvfuzz)
         print(f'House Value Crisp Clipped: {hvCrisp}')
 
         assfuzz = self.fuzzify(inputVar[2], 'ass')
         incfuzz = self.fuzzify(inputVar[3], 'inc')
         appfuzz = self.applicEvaluation(assfuzz, incfuzz)
-        appCrisp = self.findCentreOfGravity(f.applicant, appfuzz)
+        appCrisp = self.findCOG(fuzz.applicant, appfuzz)
         # print(appCrisp)
 
         intfuzz = self.fuzzify(inputVar[4], 'intr')
         hvfuzz2 = self.fuzzify(hvCrisp, 'hv')
         appfuzz2 = self.fuzzify(appCrisp, 'ae')
         creditFuzz = self.creditEval(incfuzz, intfuzz, appfuzz2, hvfuzz2)
-        creditCrisp = self.findCentreOfGravity(f.credit, creditFuzz)
+        creditCrisp = self.findCOG(fuzz.credit, creditFuzz)
 
         return creditCrisp
 
-    def getEvaluationScaled(self, inputVar):
+    def getScaled(self, inputVar):
         # Input:
         # [MarketValue, Location, Assets, Income, Interest]
         mvfuzz = self.fuzzify(inputVar[0], 'mv')
         locfuzz = self.fuzzify(inputVar[1], 'loc')
         hvfuzz = self.homeEvaluation(mvfuzz, locfuzz)
-        hvCrisp = self.findCentreOfGravityScale(f.house, hvfuzz)
+        hvCrisp = self.findCOGScale(fuzz.house, hvfuzz)
         print(f'House Value Crisp Scaled: {hvCrisp}')
 
         assfuzz = self.fuzzify(inputVar[2], 'ass')
         incfuzz = self.fuzzify(inputVar[3], 'inc')
         appfuzz = self.applicEvaluation(assfuzz, incfuzz)
-        appCrisp = self.findCentreOfGravityScale(f.applicant, appfuzz)
+        appCrisp = self.findCOGScale(fuzz.applicant, appfuzz)
         # print(appCrisp)
 
         intfuzz = self.fuzzify(inputVar[4], 'intr')
         hvfuzz2 = self.fuzzify(hvCrisp, 'hv')
         appfuzz2 = self.fuzzify(appCrisp, 'ae')
         creditFuzz = self.creditEval(incfuzz, intfuzz, appfuzz2, hvfuzz2)
-        creditCrisp = self.findCentreOfGravityScale(f.credit, creditFuzz)
+        creditCrisp = self.findCOGScale(fuzz.credit, creditFuzz)
 
         return creditCrisp
 
 
 if __name__ == "__main__":
     # input = [MarketValue, Location, Assets, Income, Interest]
-    innputt = [700000, 6.5, 70200, 33000, 7]
-    print(innputt)
-    f = fuzzyv2()
-    f.plotLimits()
-    credit = f.getEvaluationClipped(innputt)
-    print(f'Your clipped credit is evaluated to: {credit}')
+    innputt = [246123, 7, 56280, 91220, 3.2]
 
-    f.plot3d(f.marketValue, f.location, f.homeEvaluation, f.house)
-    f.plot3d(f.asset, f.income, f.applicEvaluation, f.applicant)
-    f.plot3d(f.applicant, f.house, [1, 0, 0, 0], [1, 0, 0], f.creditEval, f.credit)
-    f.plot3d(f.applicant, f.interest, [0, 0, 0, 0], [0, 0, 1, 0, 0], f.creditEval, f.credit, flipFlag=True)
+    fuzz = fuzzy()
+    fuzz.plotLimits()
+    credit = fuzz.getClipped(innputt)
+    print(f"clipped credit is: {credit}")
 
-    credit = f.getEvaluationScaled(innputt)
-    print(f'Your scaled credit is evaluated to: {credit}')
+    fuzz.plot(fuzz.marketValueSet, fuzz.location, fuzz.homeEvaluation, fuzz.house)
+    fuzz.plot(fuzz.asset, fuzz.income, fuzz.applicEvaluation, fuzz.applicant)
+    fuzz.plot(fuzz.applicant, fuzz.house, [1, 0, 0, 0], [1, 0, 0], fuzz.creditEval, fuzz.credit)
+    fuzz.plot(fuzz.applicant, fuzz.interest, [0, 0, 0, 0], [0, 0, 1, 0, 0], fuzz.creditEval, fuzz.credit, flipFlag=True)
+
+    credit = fuzz.getScaled(innputt)
+    print(f"scaled credit is: {credit}")
