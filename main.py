@@ -121,26 +121,29 @@ def pcaNeural():
     train_target = to_categorical(train_target)
     test_target = to_categorical(test_target)
 
-    #train_images = train_images / 255
-    #test_images = test_images / 255
+    train_images = train_images / 255
+    test_images = test_images / 255
 
     scaler = StandardScaler()
     scaler.fit(train_images)
     X_sc_train = scaler.transform(train_images)
     X_sc_test = scaler.transform(test_images)
 
-    size = 500
+    size = 150
 
     pca = PCA(n_components=size)
+    pca.fit(train_images)
+
     train_images_pca = pca.fit_transform(X_sc_train)
     test_images_pca = pca.fit_transform(X_sc_test)
     pca_std = np.std(train_images_pca)
 
     model = models.Sequential()
     model.add(layers.Dense(128, activation="relu", input_shape=(size,)))
+    model.add(layers.Dropout(0.1))
     model.add(layers.Dense(10, activation="softmax"))
     model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
-    model.fit(train_images_pca, train_target, epochs=10, batch_size=128, validation_split=0.15)
+    model.fit(train_images_pca, train_target, epochs=3, batch_size=64, validation_split=0.15)
 
     # check model performance over testset
     test_loss, test_acc = model.evaluate(test_images_pca, test_target)
