@@ -113,90 +113,6 @@ def kfoldNeural():
 
     plt.show()
 
-def pcaNeural():
-    (train_images, train_target), (test_images, test_target) = mnist.load_data()
-
-    Y_train = to_categorical(train_target)
-    test_target = to_categorical(test_target)
-
-    X_train = (train_images).astype('float32')
-    X_test = (test_images).astype('float32')
-
-    plt.imshow(X_train[1].reshape(28, 28))
-    plt.show()
-    X_train = X_train.reshape(60000, 28 * 28)
-    X_test = X_test.reshape(10000, 28 * 28)
-
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    X_sc_train = scaler.transform(X_train)
-    X_sc_test = scaler.transform(X_test)
-
-    pca = PCA(n_components=500)
-    pca.fit(X_train)
-
-    plt.plot(np.cumsum(pca.explained_variance_ratio_))
-    plt.xlabel('Number of components')
-    plt.ylabel('Cumulative explained variance')
-
-    NCOMPONENTS = 100
-
-    pca = PCA(n_components=NCOMPONENTS)
-    X_pca_train = pca.fit_transform(X_sc_train)
-    X_pca_test = pca.fit_transform(X_sc_test)
-    pca_std = np.std(X_pca_train)
-
-    print(X_sc_train.shape)
-    print(X_pca_train.shape)
-
-    inv_pca = pca.inverse_transform(X_pca_train)
-    inv_sc = scaler.inverse_transform(inv_pca)
-
-    def side_by_side(indexes):
-        org = X_train[indexes].reshape(28, 28)
-        rec = inv_sc[indexes].reshape(28, 28)
-        pair = np.concatenate((org, rec), axis=1)
-        plt.figure(figsize=(4, 2))
-        plt.imshow(pair)
-        plt.show()
-
-    for index in range(0, 10):
-        side_by_side(index)
-
-    units = 128
-    model = layers.Sequential()
-    model.add(layers.Dense(units, input_dim=NCOMPONENTS, activation='relu'))
-    model.add(layers.GaussianNoise(pca_std))
-
-    model.add(layers.Dense(units, activation='relu'))
-    model.add(layers.GaussianNoise(pca_std))
-    model.add(layers.Dropout(0.1))
-
-    model.add(layers.Dense(10, activation='softmax'))
-
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['categorical_accuracy'])
-
-    model.fit(X_pca_train, Y_train, epochs=100, batch_size=256, validation_split=0.15, verbose=2)
-
-    predictions = model.predict_classes(X_pca_test, verbose=0)
-
-    y_true = np.argmax(test_target, axis=1)
-    cm = confusion_matrix(y_true, predictions)
-    labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    print('cm: ', cm)
-
-    ax = plt.subplot()
-    sns.heatmap(cm, annot=True, ax=ax, square=True, fmt='g')
-
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('True')
-    ax.set_title('Confusion Matrix')
-    ax.xaxis.set_ticklabels(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
-    ax.yaxis.set_ticklabels(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
-
-    plt.show()
-
-
 class pcav2yolo:
     def __init__(self):
         pass
@@ -274,4 +190,7 @@ def createModel():
 if __name__ == "__main__":
     p = pcav2yolo()
     p.run()
-    #swag
+
+    kfoldNeural()
+
+    vanligNeural()
